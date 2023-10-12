@@ -1,15 +1,18 @@
 #!/usr/bin/tcc -run
 
+// Example:
+//
+// ./c-enum-generator --name=color_t --string-to-enum-name=string_to_color 
+//     --enum-to-string-name=color_to_string red green blue
+//
+
 #include <stdio.h>
 
 #define C_ARMYKNIFE_LIB_IMPL
 #include "../c-armyknife-lib/c-armyknife-lib.h"
 
-int main(int argc, char** argv) {
-
-  command_line_parse_result_t args_and_files
-      = parse_command_line(argc, argv, false);
-
+void output_enum(command_line_parse_result_t args_and_files) {
+  char* enum_name = string_ht_find(args_and_files.flags, "name").str;
   fprintf(stdout, "typedef enum {\n");
 
   for (int i = 0; i < args_and_files.files->length; i++) {
@@ -21,5 +24,64 @@ int main(int argc, char** argv) {
     }
   }
 
-  fprintf(stdout, "} %s;\n", string_ht_find(args_and_files.flags, "name").str);
+  fprintf(stdout, "} %s;\n", enum_name);
+}
+
+void output_enum_to_string_fn(command_line_parse_result_t args_and_files) {
+  char* enum_name = string_ht_find(args_and_files.flags, "name").str;
+  char* enum_to_string_name = string_ht_find(args_and_files.flags, "enum-to-string-name").str;
+
+  fprintf(stdout, "char* %s(%s value) {\n", enum_to_string_name, enum_name);
+
+  fprintf(stdout, "  static char** array = {\n");
+  for (int i = 0; i < args_and_files.files->length; i++) {
+    fprintf(stdout, "    \"%s\"", (char*) ptr_array_get(args_and_files.files, i));
+    if (i < (args_and_files.files->length - 1)) {
+      fprintf(stdout, ",\n");
+    } else {
+      fprintf(stdout, "\n");
+    }
+  }
+  fprintf(stdout, "  };\n\n");
+
+  fprintf(stdout, "  if (value >= 0 && value < %d) {\n", args_and_files.files->length);
+  fprintf(stdout, "    return array[value];\n");
+  fprintf(stdout, "  } else {\n");
+  fprintf(stdout, "    FATAL_ERROR(ERROR_ILLEGAL_ENUM_VALUE);\n");
+  fprintf(stdout, "  }\n");
+  
+  fprintf(stdout, "}\n");
+}
+
+void output_string_to_enum_fn(command_line_parse_result_t args_and_files) {
+  char* enum_name = string_ht_find(args_and_files.flags, "name").str;
+  char* string_to_enum_name = string_ht_find(args_and_files.flags, "string-to-enum-name").str;
+
+  fprintf(stdout, "%s %s(char* str) {\n", enum_name, string_to_enum_name);
+
+  for (int i = 0; i < args_and_files.files->length; i++) {
+    char* enum_member_name = (char*) ptr_array_get(args_and_files.files, i);
+    fprintf(stdout, "  if (strcmp(str, \"%s\") == 0) {\n", enum_member_name);
+    fprintf(stdout, "    return %s;\n", enum_member_name);
+    fprintf(stdout, "  }\n");
+  }
+
+  fprintf(stdout, "    FATAL_ERROR(ERROR_ILLEGAL_ENUM_VALUE);\n");
+  fprintf(stdout, "}\n");
+}
+
+int main(int argc, char** argv) {
+
+  command_line_parse_result_t args_and_files
+      = parse_command_line(argc, argv, false);
+
+  char* enum_name = string_ht_find(args_and_files.flags, "name").str;
+  char* string_to_enum_name = string_ht_find(args_and_files.flags, "string-to-enum-name").str;
+  char* enum_to_string_name = string_ht_find(args_and_files.flags, "enum-to-string-name").str;
+
+  output_enum(args_and_files);
+  fprintf(stdout, "\n\n");
+  output_enum_to_string_fn(args_and_files);
+  fprintf(stdout, "\n\n");
+  output_string_to_enum_fn(args_and_files);
 }
