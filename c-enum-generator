@@ -1,0 +1,25 @@
+#!/usr/bin/tcc -run
+
+#include <stdio.h>
+
+#define C_ARMYKNIFE_LIB_IMPL
+#include "../c-armyknife-lib/c-armyknife-lib.h"
+
+int main(int argc, char** argv) {
+
+  command_line_parse_result_t args_and_files
+      = parse_command_line(argc, argv, false);
+
+  fprintf(stdout, "typedef enum {\n");
+
+  for (int i = 0; i < args_and_files.files->length; i++) {
+    fprintf(stdout, "  %s", (char*) ptr_array_get(args_and_files.files, i));
+    if (i < (args_and_files.files->length - 1)) {
+      fprintf(stdout, ",\n");
+    } else {
+      fprintf(stdout, "\n");
+    }
+  }
+
+  fprintf(stdout, "} %s;\n", string_ht_find(args_and_files.flags, "name").str);
+}
