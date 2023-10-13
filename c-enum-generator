@@ -16,7 +16,7 @@ void output_enum(command_line_parse_result_t args_and_files) {
   fprintf(stdout, "typedef enum {\n");
 
   for (int i = 0; i < args_and_files.files->length; i++) {
-    fprintf(stdout, "  %s", (char*) ptr_array_get(args_and_files.files, i));
+    fprintf(stdout, "  %s", value_array_get(args_and_files.files, i).str);
     if (i < (args_and_files.files->length - 1)) {
       fprintf(stdout, ",\n");
     } else {
@@ -35,7 +35,7 @@ void output_enum_to_string_fn(command_line_parse_result_t args_and_files) {
 
   fprintf(stdout, "  static char** array = {\n");
   for (int i = 0; i < args_and_files.files->length; i++) {
-    fprintf(stdout, "    \"%s\"", (char*) ptr_array_get(args_and_files.files, i));
+    fprintf(stdout, "    \"%s\"", value_array_get(args_and_files.files, i).str);
     if (i < (args_and_files.files->length - 1)) {
       fprintf(stdout, ",\n");
     } else {
@@ -60,7 +60,7 @@ void output_string_to_enum_fn(command_line_parse_result_t args_and_files) {
   fprintf(stdout, "%s %s(char* str) {\n", enum_name, string_to_enum_name);
 
   for (int i = 0; i < args_and_files.files->length; i++) {
-    char* enum_member_name = (char*) ptr_array_get(args_and_files.files, i);
+    char* enum_member_name = value_array_get(args_and_files.files, i).str;
     fprintf(stdout, "  if (strcmp(str, \"%s\") == 0) {\n", enum_member_name);
     fprintf(stdout, "    return %s;\n", enum_member_name);
     fprintf(stdout, "  }\n");
